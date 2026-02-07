@@ -1,0 +1,95 @@
+local function Shuffle(arrayToShuffle)
+    local e = #arrayToShuffle - 1
+	while e > 0 do
+		local index = math.floor(math.random()*(e-1)+0.5)
+		local temp = arrayToShuffle[e]
+		
+		arrayToShuffle[e] = arrayToShuffle[index]
+		arrayToShuffle[index] = temp
+        e = e-1
+    end
+end
+
+local function MakePermutation()
+    local i = 0
+    local permutation = {}
+    while i < 256 do
+        table.insert(permutation,i)
+        i = i + 1
+    end
+	Shuffle(permutation)
+	i = 0
+	while i < 256 do
+		table.insert(permutation,permutation[i])
+        i = i + 1
+    end
+	
+	return permutation
+end
+
+local Permutation = MakePermutation()
+
+local function GetConstantVector(v)
+	--v is the value from the permutation table
+	local h = v % 3
+    print(h)
+    if h == 0 then
+        return Vector2.new(1.0, 1.0)
+    elseif h == 1 then
+        return Vector2.new(-1.0,1.0)
+    elseif h == 2 then
+        return Vector2.new(-1.0,-1.0)
+    else
+        return Vector2.new(1.0,-1.0)
+    end
+end
+
+local function Fade(t)
+	return ((6*t - 15)*t + 10)*t*t*t
+end
+
+local function Lerp(t, a1, a2)
+	return a1 + t*(a2-a1)
+end
+
+function Noise2D(x, y)
+	local X = math.floor(x)
+	local Y = math.floor(y)
+
+	local xf = x-math.floor(x)
+	local yf = y-math.floor(y)
+
+	local TR = Vector2.new(xf-1.0, yf-1.0)
+	local TL = Vector2.new(xf, yf-1.0)
+	local BR = Vector2.new(xf-1.0, yf)
+	local BL = Vector2.new(xf, yf)
+	
+	-- Select a value from the permutation array for each of the 4 corners
+	local VTR = Permutation[Permutation[X+1]+Y+1]
+	local VTL = Permutation[Permutation[X]+Y+1]
+	local VBR = Permutation[Permutation[X+1]+Y]
+	local VBL = Permutation[Permutation[X]+Y]
+
+    print(VTR)
+    print(VTL)
+    print(VBR)
+    print(VBL)
+	
+	local DTR = Vector3.dot(GetConstantVector(VTR),TR)
+	local DTL = Vector3.dot(GetConstantVector(VTL),TL)
+	local DBR = Vector3.dot(GetConstantVector(VBR),BR)
+	local DBL = Vector3.dot(GetConstantVector(VBL),BL)
+	
+	local u = Fade(xf)
+	local v = Fade(yf)
+	
+	return Lerp(u,
+		Lerp(v, DBL, DTL),
+		Lerp(v, DBR, DTR)
+	)
+end
+
+print(Noise2D(1.01,0.123))
+print(Noise2D(12.4,2.5))
+
+--Delete the two above, they are for testing.
